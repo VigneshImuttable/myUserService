@@ -1,5 +1,8 @@
 package com.example.userervice.services;
 
+import com.example.userervice.Exceptions.PasswordNotMatchingException;
+import com.example.userervice.Exceptions.TokenNotExistException;
+import com.example.userervice.Exceptions.UserNotExistException;
 import com.example.userervice.dtos.UserDto;
 import com.example.userervice.models.Token;
 import com.example.userervice.models.User;
@@ -42,11 +45,11 @@ public class UserService {
         return user;
     }
 
-    public Token logIn(String email, String password){
+    public Token logIn(String email, String password) throws UserNotExistException ,PasswordNotMatchingException {
         Optional<User> userOptional = userRepository.findFirstByEmail(email);
         if(userOptional.isEmpty()) {
             //throw user not exist exception
-            return null;
+            throw new UserNotExistException("Please try with valid email");
         }
 
         User user = userOptional.get();
@@ -54,7 +57,7 @@ public class UserService {
         //Validating password
         if(!bCryptPasswordEncoder.matches(password, user.getHashedPassword())){
             //Throw password not matching exception
-            return null;
+            throw new PasswordNotMatchingException("Please try with valid password");
         }
 
         LocalDate today = LocalDate.now();
@@ -70,11 +73,11 @@ public class UserService {
         return  tokenRepository.save(token);
     }
 
-    public void logout(String value){
+    public void logout(String value) throws TokenNotExistException {
         Optional<Token> optionalToken = tokenRepository.findByValueAndDeletedEquals(value,false);
         if(optionalToken.isEmpty()){
             //throw Token Not Exist
-            return;
+            throw new TokenNotExistException("The Token does not exist");
         }
 
         Token tkn = optionalToken.get();
@@ -83,9 +86,11 @@ public class UserService {
         return;
     }
 
-    public UserDto validateToken(String token){
+    public UserDto validateToken(String token) throws TokenNotExistException {
        Optional <Token> tkn = tokenRepository.findByValueAndDeletedEqualsAndExpiryDateGreaterThan(token,false,new Date());
-       if(tkn.isEmpty()) return null;
+       if(tkn.isEmpty()) {
+           throw new TokenNotExistException("The token does not exist");
+       }
 
        //Self validating
       else if(!JwtUtils.validateToken(token)) return null;

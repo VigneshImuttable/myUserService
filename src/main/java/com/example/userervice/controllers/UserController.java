@@ -1,5 +1,8 @@
 package com.example.userervice.controllers;
 
+import com.example.userervice.Exceptions.PasswordNotMatchingException;
+import com.example.userervice.Exceptions.TokenNotExistException;
+import com.example.userervice.Exceptions.UserNotExistException;
 import com.example.userervice.dtos.LoginRequestDto;
 import com.example.userervice.dtos.LogoutRequestDto;
 import com.example.userervice.dtos.SignupRequestDto;
@@ -38,13 +41,13 @@ private UserService userService;
     }
 
     @PostMapping("/login")
-    public Token login(@RequestBody LoginRequestDto request){
+    public Token login(@RequestBody LoginRequestDto request) throws UserNotExistException, PasswordNotMatchingException {
 
     return userService.logIn(request.getEmail(),request.getPassword());
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logOut(@RequestBody LogoutRequestDto request){
+    public ResponseEntity<Void> logOut(@RequestBody LogoutRequestDto request) throws TokenNotExistException {
 
     userService.logout(request.getToken());
     return new ResponseEntity<>(HttpStatus.OK);
@@ -52,7 +55,7 @@ private UserService userService;
 
 
     @PostMapping("/validate/{token}")
-    public UserDto validateToken(@PathVariable("token") @NonNull String token){
+    public UserDto validateToken(@PathVariable("token") @NonNull String token) throws TokenNotExistException {
         return userService.validateToken(token);
     }
 }
